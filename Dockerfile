@@ -13,9 +13,10 @@ RUN apk add --no-cache
 WORKDIR /app
 COPY --from=builder /app/main .
 COPY --from=builder /app/.env /app/
+COPY --from=builder /app/migrations ./migrations
 COPY --from=builder /app/config ./config
 
 EXPOSE 8080
 
 ENTRYPOINT ["/app/main"]
-CMD ["--config=/app/config/local.yaml"]
+CMD ["--config=/app/config/dev.yaml"]

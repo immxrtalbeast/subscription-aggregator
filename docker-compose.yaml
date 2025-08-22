@@ -1,19 +1,31 @@
-     services:
-      #  app:
-      #    build: .
-      #    ports:
-      #      - "8080:8080"
-      #    depends_on:
-      #      - postgres
-       postgres:
-         image: postgres:latest
-         environment:
-           POSTGRES_USER: postgres
-           POSTGRES_PASSWORD: postgres
-           POSTGRES_DB: subscription_db
-         ports:
-           - "5432:5432"
-         volumes:
-           - postgres_data:/var/lib/postgresql/data
-     volumes:
-       postgres_data:
+services:
+  subscription_service:
+    image: c0dys/subscription_service:latest
+    environment:
+      - CONFIG_PATH=/app/config/dev.yaml
+    ports:
+      - "8080:8080"
+    networks:
+      - subscription_network
+    depends_on:
+      - postgres
+
+  postgres:
+    image: postgres:latest
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: subscription_db
+    ports:
+      - "5432:5432"
+    networks:
+      - subscription_network
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+volumes:
+  postgres_data:
+
+networks:
+  subscription_network:
+    driver: bridge
