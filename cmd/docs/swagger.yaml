@@ -7,7 +7,7 @@ definitions:
         type: string
       price:
         example: 400
-        type: integer
+        type: number
       service_name:
         example: Yandex Plus
         type: string
@@ -23,24 +23,26 @@ definitions:
     - start_date
     - user_id
     type: object
+  domain.MonthYear:
+    properties:
+      month:
+        type: integer
+      year:
+        type: integer
+    type: object
   domain.Subscription:
     properties:
-      endDate:
-        example: 07-2026
-        type: string
+      end_date:
+        $ref: '#/definitions/domain.MonthYear'
       id:
         type: string
       price:
-        example: 400
         type: integer
-      serviceName:
-        example: Yandex Plus
+      service_name:
         type: string
-      startDate:
-        example: 07-2025
-        type: string
-      userID:
-        example: a19df875-4040-4fc3-84ad-003d013fcd89
+      start_date:
+        $ref: '#/definitions/domain.MonthYear'
+      user_id:
         type: string
     type: object
   domain.UpdateSubcriptionRequest:
@@ -83,7 +85,7 @@ paths:
         in: path
         name: id
         required: true
-        type: integer
+        type: string
       responses:
         "200":
           description: OK
@@ -94,7 +96,7 @@ paths:
         in: path
         name: id
         required: true
-        type: integer
+        type: string
       responses:
         "200":
           description: OK
@@ -103,11 +105,6 @@ paths:
       summary: Получить подписку
   /all:
     get:
-      parameters:
-      - description: Описание параметра
-        in: query
-        name: param_name
-        type: string
       responses:
         "200":
           description: OK
@@ -142,12 +139,12 @@ paths:
         in: query
         name: service_name
         type: string
-      - description: Начальная дата (YYYY-MM-DD)
+      - description: Начальная дата (MM-YYYY)
         in: query
         name: start_date
         required: true
         type: string
-      - description: Конечная дата (YYYY-MM-DD)
+      - description: Конечная дата (MM-YYYY)
         in: query
         name: end_date
         required: true

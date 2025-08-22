@@ -121,7 +121,6 @@ func (si *SubscriptionInteractor) TotalCost(ctx context.Context, userID *uuid.UU
 		slog.String("op", op),
 		slog.String("start_date", startDate.String()),
 		slog.String("end_date", endDate.String()),
-		slog.String("service_name", *serviceName),
 	)
 	if endDate.IsBefore(startDate) {
 		log.Error("start date cannot be after end date")

@@ -74,7 +74,7 @@ func (c *SubscriptionController) AddSubcription(ctx *gin.Context) {
 		})
 		return
 	}
-	subscriptionID, err := c.subscriptionService.AddSubscription(ctx, req.ServiceName, req.Price, userID, startDate, endDate)
+	subscriptionID, err := c.subscriptionService.AddSubscription(ctx, req.ServiceName, int(req.Price), userID, startDate, endDate)
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, gin.H{
 			"error":   "failed to create subscription",
@@ -89,7 +89,7 @@ func (c *SubscriptionController) AddSubcription(ctx *gin.Context) {
 }
 
 // @Summary Получить подписку
-// @Param   id path int true "ID подписки"
+// @Param   id path string true "ID подписки"
 // @Success 200 {object} domain.Subscription
 // @Router /{id} [get]
 func (c *SubscriptionController) Subscription(ctx *gin.Context) {
@@ -122,7 +122,7 @@ func (c *SubscriptionController) Subscription(ctx *gin.Context) {
 }
 
 // @Summary Удалить подписку
-// @Param   id path int true "ID подписки"
+// @Param   id path string true "ID подписки"
 // @Success 200
 // @Router /{id} [delete]
 func (c *SubscriptionController) DeleteSubscription(ctx *gin.Context) {
@@ -158,15 +158,8 @@ func (c *SubscriptionController) DeleteSubscription(ctx *gin.Context) {
 // @Success 200 {object} map[string]interface{}
 // @Router /update [put]
 func (c *SubscriptionController) UpdateSubscription(ctx *gin.Context) {
-	type UpdateSubcriptionRequest struct {
-		SubscriptionIDRaw string `json:"id" binding:"required"`
-		ServiceName       string `json:"service_name" binding:"required" example:"Yandex Plus"`
-		Price             int    `json:"price" binding:"required" example:"400"`
-		UserIDRaw         string `json:"user_id" binding:"required" example:"a19df875-4040-4fc3-84ad-003d013fcd89"`
-		StartDateRaw      string `json:"start_date" binding:"required" example:"07-2025"`
-		EndDateRaw        string `json:"end_date" example:"07-2026"`
-	}
-	var req UpdateSubcriptionRequest
+
+	var req domain.UpdateSubcriptionRequest
 	if err := ctx.ShouldBindJSON(&req); err != nil {
 		ctx.JSON(http.StatusBadRequest, gin.H{
 			"error":   "invalid request body",
@@ -230,7 +223,6 @@ func (c *SubscriptionController) UpdateSubscription(ctx *gin.Context) {
 }
 
 // @Summary Получить все подписки
-// @Param param_name query string false "Описание параметра"
 // @Success 200 {object} map[string]interface{}
 // @Router /all [get]
 func (c *SubscriptionController) ListSubscription(ctx *gin.Context) {
@@ -250,8 +242,8 @@ func (c *SubscriptionController) ListSubscription(ctx *gin.Context) {
 // @Summary Подсчет суммарной стоимости всех подписок за выбранный период с фильтрацией по id пользователя и названию подписки
 // @Param   user_id      query string  false "ID пользователя"
 // @Param   service_name query string  false "Название сервиса"
-// @Param   start_date   query string  true  "Начальная дата (YYYY-MM-DD)"
-// @Param   end_date     query string  true  "Конечная дата (YYYY-MM-DD)"
+// @Param   start_date   query string  true  "Начальная дата (MM-YYYY)"
+// @Param   end_date     query string  true  "Конечная дата (MM-YYYY)"
 // @Success 200 {object} map[string]interface{}
 // @Router /total [get]
 func (c *SubscriptionController) TotalCost(ctx *gin.Context) {

@@ -18,14 +18,6 @@ const docTemplate = `{
         "/all": {
             "get": {
                 "summary": "Получить все подписки",
-                "parameters": [
-                    {
-                        "type": "string",
-                        "description": "Описание параметра",
-                        "name": "param_name",
-                        "in": "query"
-                    }
-                ],
                 "responses": {
                     "200": {
                         "description": "OK",
@@ -80,14 +72,14 @@ const docTemplate = `{
                     },
                     {
                         "type": "string",
-                        "description": "Начальная дата (YYYY-MM-DD)",
+                        "description": "Начальная дата (MM-YYYY)",
                         "name": "start_date",
                         "in": "query",
                         "required": true
                     },
                     {
                         "type": "string",
-                        "description": "Конечная дата (YYYY-MM-DD)",
+                        "description": "Конечная дата (MM-YYYY)",
                         "name": "end_date",
                         "in": "query",
                         "required": true
@@ -134,7 +126,7 @@ const docTemplate = `{
                 "summary": "Получить подписку",
                 "parameters": [
                     {
-                        "type": "integer",
+                        "type": "string",
                         "description": "ID подписки",
                         "name": "id",
                         "in": "path",
@@ -154,7 +146,7 @@ const docTemplate = `{
                 "summary": "Удалить подписку",
                 "parameters": [
                     {
-                        "type": "integer",
+                        "type": "string",
                         "description": "ID подписки",
                         "name": "id",
                         "in": "path",
@@ -184,7 +176,7 @@ const docTemplate = `{
                     "example": "07-2026"
                 },
                 "price": {
-                    "type": "integer",
+                    "type": "number",
                     "example": 400
                 },
                 "service_name": {
@@ -201,31 +193,37 @@ const docTemplate = `{
                 }
             }
         },
+        "domain.MonthYear": {
+            "type": "object",
+            "properties": {
+                "month": {
+                    "type": "integer"
+                },
+                "year": {
+                    "type": "integer"
+                }
+            }
+        },
         "domain.Subscription": {
             "type": "object",
             "properties": {
-                "endDate": {
-                    "type": "string",
-                    "example": "07-2026"
+                "end_date": {
+                    "$ref": "#/definitions/domain.MonthYear"
                 },
                 "id": {
                     "type": "string"
                 },
                 "price": {
-                    "type": "integer",
-                    "example": 400
+                    "type": "integer"
                 },
-                "serviceName": {
-                    "type": "string",
-                    "example": "Yandex Plus"
+                "service_name": {
+                    "type": "string"
                 },
-                "startDate": {
-                    "type": "string",
-                    "example": "07-2025"
+                "start_date": {
+                    "$ref": "#/definitions/domain.MonthYear"
                 },
-                "userID": {
-                    "type": "string",
-                    "example": "a19df875-4040-4fc3-84ad-003d013fcd89"
+                "user_id": {
+                    "type": "string"
                 }
             }
         },

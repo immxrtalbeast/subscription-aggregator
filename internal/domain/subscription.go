@@ -34,11 +34,11 @@ type SubscriptionRepository interface {
 }
 
 type AddSubcriptionRequest struct {
-	ServiceName  string `json:"service_name" binding:"required" example:"Yandex Plus"`
-	Price        int    `json:"price" binding:"required" example:"400"`
-	UserIDRaw    string `json:"user_id" binding:"required" example:"a19df875-4040-4fc3-84ad-003d013fcd89"`
-	StartDateRaw string `json:"start_date" binding:"required" example:"07-2025"`
-	EndDateRaw   string `json:"end_date" example:"07-2026"`
+	ServiceName  string  `json:"service_name" binding:"required" example:"Yandex Plus"`
+	Price        float64 `json:"price" binding:"required" example:"400"`
+	UserIDRaw    string  `json:"user_id" binding:"required" example:"a19df875-4040-4fc3-84ad-003d013fcd89"`
+	StartDateRaw string  `json:"start_date" binding:"required" example:"07-2025"`
+	EndDateRaw   string  `json:"end_date" example:"07-2026"`
 }
 
 type UpdateSubcriptionRequest struct {
