@@ -19,7 +19,7 @@ func NewSubscriptionInteractor(log *slog.Logger, subsRepo domain.SubscriptionRep
 	return &SubscriptionInteractor{log: log, subsRepo: subsRepo}
 }
 
-func (si *SubscriptionInteractor) AddSubcription(ctx context.Context, serviceName string, userID uuid.UUID, startDate domain.MonthYear) (uuid.UUID, error) {
+func (si *SubscriptionInteractor) AddSubscription(ctx context.Context, serviceName string, price int, userID uuid.UUID, startDate domain.MonthYear) (uuid.UUID, error) {
 	const op = "service.subscription.add"
 	log := si.log.With(
 		slog.String("op", op),
@@ -29,6 +29,7 @@ func (si *SubscriptionInteractor) AddSubcription(ctx context.Context, serviceNam
 	log.Info("adding subscription")
 	subscription := &domain.Subscription{
 		ServiceName: serviceName,
+		Price:       price,
 		UserID:      userID,
 		StartDate:   startDate,
 	}
@@ -49,7 +50,7 @@ func (si *SubscriptionInteractor) Subscription(ctx context.Context, subscription
 		slog.String("id", subscriptionID.String()),
 	)
 	log.Info("getting subscription")
-	subscription, err := si.Subscription(ctx, subscriptionID)
+	subscription, err := si.subsRepo.Subscription(ctx, subscriptionID)
 	if err != nil {
 		log.Error("failed to get subscription", sl.Err(err))
 		return nil, fmt.Errorf("%s: %w", op, err)
@@ -73,7 +74,7 @@ func (si *SubscriptionInteractor) DeleteSubscription(ctx context.Context, subscr
 	return nil
 }
 
-func (si *SubscriptionInteractor) UpdateSubscription(ctx context.Context, subscriptionID uuid.UUID, serviceName string, userID uuid.UUID, startDate domain.MonthYear) error {
+func (si *SubscriptionInteractor) UpdateSubscription(ctx context.Context, subscriptionID uuid.UUID, serviceName string, price int, userID uuid.UUID, startDate domain.MonthYear) error {
 	const op = "service.subscription.update"
 	log := si.log.With(
 		slog.String("op", op),
@@ -85,6 +86,7 @@ func (si *SubscriptionInteractor) UpdateSubscription(ctx context.Context, subscr
 	subscription := &domain.Subscription{
 		ID:          subscriptionID,
 		ServiceName: serviceName,
+		Price:       price,
 		UserID:      userID,
 		StartDate:   startDate,
 	}

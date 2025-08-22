@@ -1,0 +1,2 @@
+DROP TABLE IF EXISTS subscriptions;
+DROP DOMAIN IF EXISTS month_year;

@@ -2,6 +2,7 @@ package domain
 
 import (
 	"database/sql/driver"
+	"encoding/json"
 	"fmt"
 	"strconv"
 	"strings"
@@ -79,4 +80,24 @@ func (my *MonthYear) Scan(value interface{}) error {
 }
 func (MonthYear) GormDataType() string {
 	return "char(7)" // MM-YYYY = 7 символов
+}
+
+func (my MonthYear) MarshalJSON() ([]byte, error) {
+	return json.Marshal(my.String())
+}
+
+func (my *MonthYear) UnmarshalJSON(data []byte) error {
+	var s string
+	if err := json.Unmarshal(data, &s); err != nil {
+		return err
+	}
+
+	parsed, err := ParseMonthYear(s)
+	if err != nil {
+		return err
+	}
+
+	my.Year = parsed.Year
+	my.Month = parsed.Month
+	return nil
 }
