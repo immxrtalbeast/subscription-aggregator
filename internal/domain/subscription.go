@@ -1,0 +1,30 @@
+package domain
+
+import (
+	"context"
+
+	"github.com/google/uuid"
+)
+
+type Subscription struct {
+	ID          uuid.UUID `gorm:"type:uuid;default:uuid_generate_v4();primaryKey"`
+	ServiceName string    `gorm:"not null"`
+	UserID      uuid.UUID `gorm:"type:uuid;not null"`
+	StartDate   MonthYear `gorm:"not null"`
+}
+
+type SubscriptionInteractor interface {
+	AddSubscription(ctx context.Context, serviceName string, userID uuid.UUID, startDate MonthYear) (uuid.UUID, error)
+	Subscription(ctx context.Context, subscriptionID uuid.UUID) (*Subscription, error)
+	DeleteSubscription(ctx context.Context, subscriptionID uuid.UUID) error
+	UpdateSubscription(ctx context.Context, subscriptionID uuid.UUID, serviceName string, userID uuid.UUID, startDate MonthYear) error
+	ListSubscription(ctx context.Context) ([]*Subscription, error)
+}
+
+type SubscriptionRepository interface {
+	SaveSubscription(ctx context.Context, subscription *Subscription) (uuid.UUID, error)
+	Subscription(ctx context.Context, subscriptionID uuid.UUID) (*Subscription, error)
+	DeleteSubscription(ctx context.Context, subscriptionID uuid.UUID) error
+	UpdateSubscription(ctx context.Context, subscription *Subscription) error
+	ListSubscription(ctx context.Context) ([]*Subscription, error)
+}
