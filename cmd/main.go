@@ -54,6 +54,7 @@ func main() {
 		api.GET("/all", subscriptionController.ListSubscription)
 		api.PUT("/update", subscriptionController.UpdateSubscription)
 		api.DELETE("/:id", subscriptionController.DeleteSubscription)
+		api.GET("/total", subscriptionController.TotalCost)
 	}
 	router.Run(":8080")
 }

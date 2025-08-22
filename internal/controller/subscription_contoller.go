@@ -199,3 +199,55 @@ func (c *SubscriptionController) ListSubscription(ctx *gin.Context) {
 		"subscriptions": subscriptions,
 	})
 }
+
+func (c *SubscriptionController) TotalCost(ctx *gin.Context) {
+	var req struct {
+		UserID      *string `form:"user_id"`
+		ServiceName *string `form:"service_name"`
+		StartDate   string  `form:"start_date" binding:"required"`
+		EndDate     string  `form:"end_date" binding:"required"`
+	}
+	if err := ctx.BindQuery(&req); err != nil {
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+	var userID *uuid.UUID
+	if req.UserID != nil {
+		id, err := uuid.Parse(*req.UserID)
+		if err != nil {
+			ctx.JSON(http.StatusBadRequest, gin.H{
+				"error":   "failed to parse userID",
+				"details": err.Error(),
+			})
+			return
+		}
+		userID = &id
+	}
+	startDate, err := domain.ParseMonthYear(req.StartDate)
+	if err != nil {
+		ctx.JSON(http.StatusBadRequest, gin.H{
+			"error":   "failed to parse start date",
+			"details": err.Error(),
+		})
+		return
+	}
+	endDate, err := domain.ParseMonthYear(req.EndDate)
+	if err != nil {
+		ctx.JSON(http.StatusBadRequest, gin.H{
+			"error":   "failed to parse end date",
+			"details": err.Error(),
+		})
+		return
+	}
+	sum, err := c.subscriptionService.TotalCost(ctx, userID, req.ServiceName, startDate, endDate)
+	if err != nil {
+		ctx.JSON(http.StatusBadRequest, gin.H{
+			"error":   "failed to get cost",
+			"details": err.Error(),
+		})
+		return
+	}
+	ctx.JSON(http.StatusOK, gin.H{
+		"total_sum": sum,
+	})
+}

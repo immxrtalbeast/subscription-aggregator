@@ -2,6 +2,7 @@ package subscription
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"log/slog"
 
@@ -112,4 +113,20 @@ func (si *SubscriptionInteractor) ListSubscription(ctx context.Context) ([]*doma
 	}
 	log.Info("list provided")
 	return list, nil
+}
+
+func (si *SubscriptionInteractor) TotalCost(ctx context.Context, userID *uuid.UUID, serviceName *string, startDate, endDate domain.MonthYear) (int, error) {
+	const op = "service.subscription.totalCost"
+	log := si.log.With(
+		slog.String("op", op),
+		slog.String("start_date", startDate.String()),
+		slog.String("end_date", endDate.String()),
+		slog.String("service_name", *serviceName),
+	)
+	if endDate.IsBefore(startDate) {
+		log.Error("start date cannot be after end date")
+		return 0, errors.New("start date cannot be after end date")
+	}
+
+	return si.subsRepo.TotalCost(ctx, userID, serviceName, startDate, endDate)
 }

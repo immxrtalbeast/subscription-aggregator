@@ -21,7 +21,7 @@ type SubscriptionInteractor interface {
 	DeleteSubscription(ctx context.Context, subscriptionID uuid.UUID) error
 	UpdateSubscription(ctx context.Context, subscriptionID uuid.UUID, serviceName string, price int, userID uuid.UUID, startDate MonthYear, endDate *MonthYear) error
 	ListSubscription(ctx context.Context) ([]*Subscription, error)
-	// TotalCost(ctx context.Context, userID uuid.UUID, serviceName string, startDate, endDate MonthYear) (int, error)
+	TotalCost(ctx context.Context, userID *uuid.UUID, serviceName *string, startDate, endDate MonthYear) (int, error)
 }
 
 type SubscriptionRepository interface {
@@ -30,5 +30,5 @@ type SubscriptionRepository interface {
 	DeleteSubscription(ctx context.Context, subscriptionID uuid.UUID) error
 	UpdateSubscription(ctx context.Context, subscription *Subscription) error
 	ListSubscription(ctx context.Context) ([]*Subscription, error)
-	// TotalCost(ctx context.Context, userID *uuid.UUID, serviceName *string, startDate, endDate MonthYear) (int, error)
+	TotalCost(ctx context.Context, userID *uuid.UUID, serviceName *string, startDate, endDate MonthYear) (int, error)
 }

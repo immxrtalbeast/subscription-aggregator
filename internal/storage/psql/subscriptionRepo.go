@@ -2,6 +2,7 @@ package psql
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/google/uuid"
 	"github.com/immxrtalbeast/subscription-aggregator/internal/domain"
@@ -46,4 +47,26 @@ func (r *SubscriptionRepository) ListSubscription(ctx context.Context) ([]*domai
 	var subscriptions []*domain.Subscription
 	err := r.db.WithContext(ctx).Model(&domain.Subscription{}).Scan(&subscriptions).Error
 	return subscriptions, err
+}
+
+func (r *SubscriptionRepository) TotalCost(ctx context.Context, userID *uuid.UUID, serviceName *string, startDate, endDate domain.MonthYear) (int, error) {
+	var total int
+
+	query := r.db.WithContext(ctx).Model(&domain.Subscription{}).
+		Select("COALESCE(SUM(price), 0)").
+		Where("start_date <= ?", endDate).
+		Where("(end_date IS NULL OR end_date >= ?)", startDate)
+
+	if userID != nil {
+		query = query.Where("user_id = ?", userID)
+	}
+	if serviceName != nil {
+		query = query.Where("service_name = ?", serviceName)
+	}
+	err := query.Row().Scan(&total)
+	if err != nil {
+		return 0, fmt.Errorf("failed to calculate total cost: %w", err)
+	}
+
+	return total, nil
 }
