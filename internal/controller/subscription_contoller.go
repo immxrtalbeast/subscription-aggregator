@@ -22,8 +22,10 @@ func (c *SubscriptionController) AddSubcription(ctx *gin.Context) {
 		Price        int    `json:"price" binding:"required"`
 		UserIDRaw    string `json:"user_id" binding:"required"`
 		StartDateRaw string `json:"start_date" binding:"required"`
+		EndDateRaw   string `json:"end_date"`
 	}
 	var req AddSubcriptionRequest
+
 	if err := ctx.ShouldBindJSON(&req); err != nil {
 		ctx.JSON(http.StatusBadRequest, gin.H{
 			"error":   "invalid request body",
@@ -39,6 +41,18 @@ func (c *SubscriptionController) AddSubcription(ctx *gin.Context) {
 		})
 		return
 	}
+	var endDate *domain.MonthYear
+	if req.EndDateRaw != "" {
+		parsed, err := domain.ParseMonthYear(req.EndDateRaw)
+		if err != nil {
+			ctx.JSON(http.StatusBadRequest, gin.H{
+				"error":   "invalid start date format",
+				"details": err.Error(),
+			})
+			return
+		}
+		endDate = &parsed
+	}
 	userID, err := uuid.Parse(req.UserIDRaw)
 	if err != nil {
 		ctx.JSON(http.StatusBadRequest, gin.H{
@@ -47,7 +61,7 @@ func (c *SubscriptionController) AddSubcription(ctx *gin.Context) {
 		})
 		return
 	}
-	subscriptionID, err := c.subscriptionService.AddSubscription(ctx, req.ServiceName, req.Price, userID, startDate)
+	subscriptionID, err := c.subscriptionService.AddSubscription(ctx, req.ServiceName, req.Price, userID, startDate, endDate)
 	if err != nil {
 		ctx.JSON(http.StatusBadRequest, gin.H{
 			"error":   "failed to create subscription",
@@ -113,6 +127,7 @@ func (c *SubscriptionController) UpdateSubscription(ctx *gin.Context) {
 		Price             int    `json:"price" binding:"required"`
 		UserIDRaw         string `json:"user_id" binding:"required"`
 		StartDateRaw      string `json:"start_date" binding:"required"`
+		EndDateRaw        string `json:"end_date"`
 	}
 	var req UpdateSubcriptionRequest
 	if err := ctx.ShouldBindJSON(&req); err != nil {
@@ -122,6 +137,7 @@ func (c *SubscriptionController) UpdateSubscription(ctx *gin.Context) {
 		})
 		return
 	}
+
 	startDate, err := domain.ParseMonthYear(req.StartDateRaw)
 	if err != nil {
 		ctx.JSON(http.StatusBadRequest, gin.H{
@@ -129,6 +145,18 @@ func (c *SubscriptionController) UpdateSubscription(ctx *gin.Context) {
 			"details": err.Error(),
 		})
 		return
+	}
+	var endDate *domain.MonthYear
+	if req.EndDateRaw != "" {
+		parsed, err := domain.ParseMonthYear(req.EndDateRaw)
+		if err != nil {
+			ctx.JSON(http.StatusBadRequest, gin.H{
+				"error":   "invalid start date format",
+				"details": err.Error(),
+			})
+			return
+		}
+		endDate = &parsed
 	}
 	userID, err := uuid.Parse(req.UserIDRaw)
 	if err != nil {
@@ -146,7 +174,7 @@ func (c *SubscriptionController) UpdateSubscription(ctx *gin.Context) {
 		})
 		return
 	}
-	if err = c.subscriptionService.UpdateSubscription(ctx, subscriptionID, req.ServiceName, req.Price, userID, startDate); err != nil {
+	if err = c.subscriptionService.UpdateSubscription(ctx, subscriptionID, req.ServiceName, req.Price, userID, startDate, endDate); err != nil {
 		ctx.JSON(http.StatusBadRequest, gin.H{
 			"error":   "failed to create subscription",
 			"details": err.Error(),

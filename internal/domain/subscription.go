@@ -12,14 +12,16 @@ type Subscription struct {
 	Price       int       `gorm:"not null"`
 	UserID      uuid.UUID `gorm:"type:uuid;not null"`
 	StartDate   MonthYear `gorm:"not null"`
+	EndDate     *MonthYear
 }
 
 type SubscriptionInteractor interface {
-	AddSubscription(ctx context.Context, serviceName string, price int, userID uuid.UUID, startDate MonthYear) (uuid.UUID, error)
+	AddSubscription(ctx context.Context, serviceName string, price int, userID uuid.UUID, startDate MonthYear, endDate *MonthYear) (uuid.UUID, error)
 	Subscription(ctx context.Context, subscriptionID uuid.UUID) (*Subscription, error)
 	DeleteSubscription(ctx context.Context, subscriptionID uuid.UUID) error
-	UpdateSubscription(ctx context.Context, subscriptionID uuid.UUID, serviceName string, price int, userID uuid.UUID, startDate MonthYear) error
+	UpdateSubscription(ctx context.Context, subscriptionID uuid.UUID, serviceName string, price int, userID uuid.UUID, startDate MonthYear, endDate *MonthYear) error
 	ListSubscription(ctx context.Context) ([]*Subscription, error)
+	// TotalCost(ctx context.Context, userID uuid.UUID, serviceName string, startDate, endDate MonthYear) (int, error)
 }
 
 type SubscriptionRepository interface {
@@ -28,4 +30,5 @@ type SubscriptionRepository interface {
 	DeleteSubscription(ctx context.Context, subscriptionID uuid.UUID) error
 	UpdateSubscription(ctx context.Context, subscription *Subscription) error
 	ListSubscription(ctx context.Context) ([]*Subscription, error)
+	// TotalCost(ctx context.Context, userID *uuid.UUID, serviceName *string, startDate, endDate MonthYear) (int, error)
 }

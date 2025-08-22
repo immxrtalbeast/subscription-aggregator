@@ -56,11 +56,16 @@ func ParseMonthYear(s string) (MonthYear, error) {
 ///GORM
 
 func (my MonthYear) Value() (driver.Value, error) {
+	if my.Year == 0 && my.Month == 0 {
+		return nil, nil
+	}
 	return my.String(), nil
 }
 
 func (my *MonthYear) Scan(value interface{}) error {
 	if value == nil {
+		my.Year = 0
+		my.Month = 0
 		return nil
 	}
 

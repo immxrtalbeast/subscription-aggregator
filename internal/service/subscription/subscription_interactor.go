@@ -19,7 +19,7 @@ func NewSubscriptionInteractor(log *slog.Logger, subsRepo domain.SubscriptionRep
 	return &SubscriptionInteractor{log: log, subsRepo: subsRepo}
 }
 
-func (si *SubscriptionInteractor) AddSubscription(ctx context.Context, serviceName string, price int, userID uuid.UUID, startDate domain.MonthYear) (uuid.UUID, error) {
+func (si *SubscriptionInteractor) AddSubscription(ctx context.Context, serviceName string, price int, userID uuid.UUID, startDate domain.MonthYear, endDate *domain.MonthYear) (uuid.UUID, error) {
 	const op = "service.subscription.add"
 	log := si.log.With(
 		slog.String("op", op),
@@ -32,6 +32,7 @@ func (si *SubscriptionInteractor) AddSubscription(ctx context.Context, serviceNa
 		Price:       price,
 		UserID:      userID,
 		StartDate:   startDate,
+		EndDate:     endDate,
 	}
 
 	id, err := si.subsRepo.SaveSubscription(ctx, subscription)
@@ -74,7 +75,7 @@ func (si *SubscriptionInteractor) DeleteSubscription(ctx context.Context, subscr
 	return nil
 }
 
-func (si *SubscriptionInteractor) UpdateSubscription(ctx context.Context, subscriptionID uuid.UUID, serviceName string, price int, userID uuid.UUID, startDate domain.MonthYear) error {
+func (si *SubscriptionInteractor) UpdateSubscription(ctx context.Context, subscriptionID uuid.UUID, serviceName string, price int, userID uuid.UUID, startDate domain.MonthYear, endDate *domain.MonthYear) error {
 	const op = "service.subscription.update"
 	log := si.log.With(
 		slog.String("op", op),
@@ -89,6 +90,7 @@ func (si *SubscriptionInteractor) UpdateSubscription(ctx context.Context, subscr
 		Price:       price,
 		UserID:      userID,
 		StartDate:   startDate,
+		EndDate:     endDate,
 	}
 	if err := si.subsRepo.UpdateSubscription(ctx, subscription); err != nil {
 		log.Error("failed to update subscription")
