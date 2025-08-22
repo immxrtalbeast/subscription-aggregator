@@ -2,6 +2,7 @@ package psql
 
 import (
 	"context"
+	"errors"
 	"fmt"
 
 	"github.com/google/uuid"
@@ -13,26 +14,32 @@ type SubscriptionRepository struct {
 	db *gorm.DB
 }
 
+var ErrSubscriptNotFound = errors.New("Subscript not found")
+
 func NewSubscriptionRepository(db *gorm.DB) *SubscriptionRepository {
 	return &SubscriptionRepository{db: db}
 }
 
 func (r *SubscriptionRepository) SaveSubscription(ctx context.Context, subscription *domain.Subscription) (uuid.UUID, error) {
 	result := r.db.WithContext(ctx).Create(&subscription)
-	if result.Error != nil {
-		return uuid.Nil, result.Error
-	}
-	return subscription.ID, nil
+	return subscription.ID, result.Error
 }
 
 func (r *SubscriptionRepository) Subscription(ctx context.Context, subscriptionID uuid.UUID) (*domain.Subscription, error) {
 	var subscription *domain.Subscription
 	err := r.db.Where("id = ?", subscriptionID).First(&subscription).Error
+	if errors.Is(err, gorm.ErrRecordNotFound) {
+		return nil, ErrSubscriptNotFound
+	}
 	return subscription, err
 }
 
 func (r *SubscriptionRepository) DeleteSubscription(ctx context.Context, subscriptionID uuid.UUID) error {
-	return r.db.WithContext(ctx).Where("id = ?", subscriptionID).Delete(&domain.Subscription{}).Error
+	err := r.db.WithContext(ctx).Where("id = ?", subscriptionID).Delete(&domain.Subscription{}).Error
+	if errors.Is(err, ErrSubscriptNotFound) {
+		return ErrSubscriptNotFound
+	}
+	return err
 }
 
 func (r *SubscriptionRepository) UpdateSubscription(ctx context.Context, subscription *domain.Subscription) error {
@@ -41,6 +48,9 @@ func (r *SubscriptionRepository) UpdateSubscription(ctx context.Context, subscri
 		Omit("id").
 		Updates(&subscription)
 
+	if errors.Is(result.Error, gorm.ErrRecordNotFound) {
+		return ErrSubscriptNotFound
+	}
 	return result.Error
 }
 func (r *SubscriptionRepository) ListSubscription(ctx context.Context) ([]*domain.Subscription, error) {

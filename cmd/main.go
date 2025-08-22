@@ -10,15 +10,24 @@ import (
 	"github.com/golang-migrate/migrate/v4"
 	_ "github.com/golang-migrate/migrate/v4/database/postgres"
 	_ "github.com/golang-migrate/migrate/v4/source/file"
+	_ "github.com/immxrtalbeast/subscription-aggregator/cmd/docs"
 	"github.com/immxrtalbeast/subscription-aggregator/internal/config"
 	"github.com/immxrtalbeast/subscription-aggregator/internal/controller"
 	"github.com/immxrtalbeast/subscription-aggregator/internal/lib/logger/sl"
 	"github.com/immxrtalbeast/subscription-aggregator/internal/lib/logger/slogpretty"
 	"github.com/immxrtalbeast/subscription-aggregator/internal/service/subscription"
 	"github.com/immxrtalbeast/subscription-aggregator/internal/storage/psql"
+	swaggerFiles "github.com/swaggo/files"
+	ginSwagger "github.com/swaggo/gin-swagger"
 	gPostgres "gorm.io/driver/postgres"
 	"gorm.io/gorm"
 )
+
+// @title Subscribe API
+// @version 1.0
+// @description API для управления подписками
+// @host localhost:8080
+// @BasePath /api/v1
 
 func main() {
 	cfg := config.MustLoad()
@@ -48,6 +57,7 @@ func main() {
 	subscriptionController := controller.NewSubscriptionController(subscriptionInteractor)
 	router := gin.Default()
 	api := router.Group("/api/v1")
+	api.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
 	{
 		api.POST("/create", subscriptionController.AddSubcription)
 		api.GET("/:id", subscriptionController.Subscription)

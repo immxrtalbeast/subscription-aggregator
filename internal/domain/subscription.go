@@ -7,12 +7,12 @@ import (
 )
 
 type Subscription struct {
-	ID          uuid.UUID `gorm:"type:uuid;default:uuid_generate_v4();primaryKey"`
-	ServiceName string    `gorm:"not null"`
-	Price       int       `gorm:"not null"`
-	UserID      uuid.UUID `gorm:"type:uuid;not null"`
-	StartDate   MonthYear `gorm:"not null"`
-	EndDate     *MonthYear
+	ID          uuid.UUID  `gorm:"type:uuid;default:uuid_generate_v4();primaryKey" json:"id"`
+	ServiceName string     `gorm:"not null" json:"service_name"`
+	Price       int        `gorm:"not null" json:"price"`
+	UserID      uuid.UUID  `gorm:"type:uuid;not null" json:"user_id"`
+	StartDate   MonthYear  `gorm:"not null" json:"start_date"`
+	EndDate     *MonthYear `json:"end_date"`
 }
 
 type SubscriptionInteractor interface {
@@ -31,4 +31,21 @@ type SubscriptionRepository interface {
 	UpdateSubscription(ctx context.Context, subscription *Subscription) error
 	ListSubscription(ctx context.Context) ([]*Subscription, error)
 	TotalCost(ctx context.Context, userID *uuid.UUID, serviceName *string, startDate, endDate MonthYear) (int, error)
+}
+
+type AddSubcriptionRequest struct {
+	ServiceName  string `json:"service_name" binding:"required" example:"Yandex Plus"`
+	Price        int    `json:"price" binding:"required" example:"400"`
+	UserIDRaw    string `json:"user_id" binding:"required" example:"a19df875-4040-4fc3-84ad-003d013fcd89"`
+	StartDateRaw string `json:"start_date" binding:"required" example:"07-2025"`
+	EndDateRaw   string `json:"end_date" example:"07-2026"`
+}
+
+type UpdateSubcriptionRequest struct {
+	SubscriptionIDRaw string `json:"id" binding:"required"`
+	ServiceName       string `json:"service_name" binding:"required" example:"Yandex Plus"`
+	Price             int    `json:"price" binding:"required" example:"400"`
+	UserIDRaw         string `json:"user_id" binding:"required" example:"a19df875-4040-4fc3-84ad-003d013fcd89"`
+	StartDateRaw      string `json:"start_date" binding:"required" example:"07-2025"`
+	EndDateRaw        string `json:"end_date" example:"07-2026"`
 }

@@ -1,11 +1,13 @@
 package controller
 
 import (
+	"errors"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
 	"github.com/immxrtalbeast/subscription-aggregator/internal/domain"
+	"github.com/immxrtalbeast/subscription-aggregator/internal/storage/psql"
 )
 
 type SubscriptionController struct {
@@ -16,20 +18,25 @@ func NewSubscriptionController(subscriptionService domain.SubscriptionInteractor
 	return &SubscriptionController{subscriptionService: subscriptionService}
 }
 
+// @Summary Создать подписку
+// @Param   subscription body domain.AddSubcriptionRequest true "Данные подписки"
+// @Success 200 {object} map[string]interface{}
+// @Router /create [post]
 func (c *SubscriptionController) AddSubcription(ctx *gin.Context) {
-	type AddSubcriptionRequest struct {
-		ServiceName  string `json:"service_name" binding:"required"`
-		Price        int    `json:"price" binding:"required"`
-		UserIDRaw    string `json:"user_id" binding:"required"`
-		StartDateRaw string `json:"start_date" binding:"required"`
-		EndDateRaw   string `json:"end_date"`
-	}
-	var req AddSubcriptionRequest
+
+	var req domain.AddSubcriptionRequest
 
 	if err := ctx.ShouldBindJSON(&req); err != nil {
 		ctx.JSON(http.StatusBadRequest, gin.H{
 			"error":   "invalid request body",
 			"details": err.Error(),
+		})
+		return
+	}
+
+	if req.Price <= 0 {
+		ctx.JSON(http.StatusBadRequest, gin.H{
+			"error": "price should be > 0",
 		})
 		return
 	}
@@ -52,6 +59,12 @@ func (c *SubscriptionController) AddSubcription(ctx *gin.Context) {
 			return
 		}
 		endDate = &parsed
+		if endDate.IsBefore(*&startDate) {
+			ctx.JSON(http.StatusBadRequest, gin.H{
+				"error": "start date should be after end date",
+			})
+			return
+		}
 	}
 	userID, err := uuid.Parse(req.UserIDRaw)
 	if err != nil {
@@ -63,7 +76,7 @@ func (c *SubscriptionController) AddSubcription(ctx *gin.Context) {
 	}
 	subscriptionID, err := c.subscriptionService.AddSubscription(ctx, req.ServiceName, req.Price, userID, startDate, endDate)
 	if err != nil {
-		ctx.JSON(http.StatusBadRequest, gin.H{
+		ctx.JSON(http.StatusInternalServerError, gin.H{
 			"error":   "failed to create subscription",
 			"details": err.Error(),
 		})
@@ -75,6 +88,10 @@ func (c *SubscriptionController) AddSubcription(ctx *gin.Context) {
 	})
 }
 
+// @Summary Получить подписку
+// @Param   id path int true "ID подписки"
+// @Success 200 {object} domain.Subscription
+// @Router /{id} [get]
 func (c *SubscriptionController) Subscription(ctx *gin.Context) {
 	subscriptionIDRaw := ctx.Param("id")
 	subscriptionID, err := uuid.Parse(subscriptionIDRaw)
@@ -87,7 +104,13 @@ func (c *SubscriptionController) Subscription(ctx *gin.Context) {
 	}
 	subscription, err := c.subscriptionService.Subscription(ctx, subscriptionID)
 	if err != nil {
-		ctx.JSON(http.StatusBadRequest, gin.H{
+		if errors.Is(err, psql.ErrSubscriptNotFound) {
+			ctx.JSON(http.StatusNotFound, gin.H{
+				"error": psql.ErrSubscriptNotFound.Error(),
+			})
+			return
+		}
+		ctx.JSON(http.StatusInternalServerError, gin.H{
 			"error":   "failed to get subscription",
 			"details": err.Error(),
 		})
@@ -98,6 +121,10 @@ func (c *SubscriptionController) Subscription(ctx *gin.Context) {
 	})
 }
 
+// @Summary Удалить подписку
+// @Param   id path int true "ID подписки"
+// @Success 200
+// @Router /{id} [delete]
 func (c *SubscriptionController) DeleteSubscription(ctx *gin.Context) {
 	subscriptionIDRaw := ctx.Param("id")
 	subscriptionID, err := uuid.Parse(subscriptionIDRaw)
@@ -109,7 +136,13 @@ func (c *SubscriptionController) DeleteSubscription(ctx *gin.Context) {
 		return
 	}
 	if err := c.subscriptionService.DeleteSubscription(ctx, subscriptionID); err != nil {
-		ctx.JSON(http.StatusBadRequest, gin.H{
+		if errors.Is(err, psql.ErrSubscriptNotFound) {
+			ctx.JSON(http.StatusNotFound, gin.H{
+				"error": psql.ErrSubscriptNotFound,
+			})
+			return
+		}
+		ctx.JSON(http.StatusInternalServerError, gin.H{
 			"error":   "failed to delete subscription",
 			"details": err.Error(),
 		})
@@ -120,14 +153,18 @@ func (c *SubscriptionController) DeleteSubscription(ctx *gin.Context) {
 	})
 }
 
+// @Summary Изменить подписку
+// @Param   subscription body domain.UpdateSubcriptionRequest true "Данные"
+// @Success 200 {object} map[string]interface{}
+// @Router /update [put]
 func (c *SubscriptionController) UpdateSubscription(ctx *gin.Context) {
 	type UpdateSubcriptionRequest struct {
 		SubscriptionIDRaw string `json:"id" binding:"required"`
-		ServiceName       string `json:"service_name" binding:"required"`
-		Price             int    `json:"price" binding:"required"`
-		UserIDRaw         string `json:"user_id" binding:"required"`
-		StartDateRaw      string `json:"start_date" binding:"required"`
-		EndDateRaw        string `json:"end_date"`
+		ServiceName       string `json:"service_name" binding:"required" example:"Yandex Plus"`
+		Price             int    `json:"price" binding:"required" example:"400"`
+		UserIDRaw         string `json:"user_id" binding:"required" example:"a19df875-4040-4fc3-84ad-003d013fcd89"`
+		StartDateRaw      string `json:"start_date" binding:"required" example:"07-2025"`
+		EndDateRaw        string `json:"end_date" example:"07-2026"`
 	}
 	var req UpdateSubcriptionRequest
 	if err := ctx.ShouldBindJSON(&req); err != nil {
@@ -175,7 +212,13 @@ func (c *SubscriptionController) UpdateSubscription(ctx *gin.Context) {
 		return
 	}
 	if err = c.subscriptionService.UpdateSubscription(ctx, subscriptionID, req.ServiceName, req.Price, userID, startDate, endDate); err != nil {
-		ctx.JSON(http.StatusBadRequest, gin.H{
+		if errors.Is(err, psql.ErrSubscriptNotFound) {
+			ctx.JSON(http.StatusNotFound, gin.H{
+				"error": psql.ErrSubscriptNotFound,
+			})
+			return
+		}
+		ctx.JSON(http.StatusInternalServerError, gin.H{
 			"error":   "failed to create subscription",
 			"details": err.Error(),
 		})
@@ -186,6 +229,10 @@ func (c *SubscriptionController) UpdateSubscription(ctx *gin.Context) {
 	})
 }
 
+// @Summary Получить все подписки
+// @Param param_name query string false "Описание параметра"
+// @Success 200 {object} map[string]interface{}
+// @Router /all [get]
 func (c *SubscriptionController) ListSubscription(ctx *gin.Context) {
 	subscriptions, err := c.subscriptionService.ListSubscription(ctx)
 	if err != nil {
@@ -200,6 +247,13 @@ func (c *SubscriptionController) ListSubscription(ctx *gin.Context) {
 	})
 }
 
+// @Summary Подсчет суммарной стоимости всех подписок за выбранный период с фильтрацией по id пользователя и названию подписки
+// @Param   user_id      query string  false "ID пользователя"
+// @Param   service_name query string  false "Название сервиса"
+// @Param   start_date   query string  true  "Начальная дата (YYYY-MM-DD)"
+// @Param   end_date     query string  true  "Конечная дата (YYYY-MM-DD)"
+// @Success 200 {object} map[string]interface{}
+// @Router /total [get]
 func (c *SubscriptionController) TotalCost(ctx *gin.Context) {
 	var req struct {
 		UserID      *string `form:"user_id"`
@@ -241,7 +295,7 @@ func (c *SubscriptionController) TotalCost(ctx *gin.Context) {
 	}
 	sum, err := c.subscriptionService.TotalCost(ctx, userID, req.ServiceName, startDate, endDate)
 	if err != nil {
-		ctx.JSON(http.StatusBadRequest, gin.H{
+		ctx.JSON(http.StatusInternalServerError, gin.H{
 			"error":   "failed to get cost",
 			"details": err.Error(),
 		})
