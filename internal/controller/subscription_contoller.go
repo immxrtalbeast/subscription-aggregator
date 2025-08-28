@@ -2,7 +2,9 @@ package controller
 
 import (
 	"errors"
+	"math"
 	"net/http"
+	"strconv"
 
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
@@ -223,10 +225,23 @@ func (c *SubscriptionController) UpdateSubscription(ctx *gin.Context) {
 }
 
 // @Summary Получить все подписки
+// @Param page query int false "Номер страницы" default(1)
+// @Param limit query int false "Лимит на страницу" default(10)
 // @Success 200 {object} map[string]interface{}
 // @Router /all [get]
 func (c *SubscriptionController) ListSubscription(ctx *gin.Context) {
-	subscriptions, err := c.subscriptionService.ListSubscription(ctx)
+	page, _ := strconv.Atoi(ctx.DefaultQuery("page", "1"))
+	limit, _ := strconv.Atoi(ctx.DefaultQuery("limit", "10"))
+	if page < 1 {
+		page = 1
+	}
+	if limit < 1 {
+		limit = 10
+	}
+	offset := (page - 1) * limit
+
+	subscriptions, total, err := c.subscriptionService.ListSubscription(ctx, offset, limit)
+
 	if err != nil {
 		ctx.JSON(http.StatusBadRequest, gin.H{
 			"error":   "failed to get list of subscriptions",
@@ -236,6 +251,12 @@ func (c *SubscriptionController) ListSubscription(ctx *gin.Context) {
 	}
 	ctx.JSON(http.StatusOK, gin.H{
 		"subscriptions": subscriptions,
+		"pagination": gin.H{
+			"page":       page,
+			"limit":      limit,
+			"total":      total,
+			"totalPages": int(math.Ceil(float64(total) / float64(limit))),
+		},
 	})
 }
 

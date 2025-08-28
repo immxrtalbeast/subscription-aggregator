@@ -53,9 +53,9 @@ func (r *SubscriptionRepository) UpdateSubscription(ctx context.Context, subscri
 	}
 	return result.Error
 }
-func (r *SubscriptionRepository) ListSubscription(ctx context.Context) ([]*domain.Subscription, error) {
+func (r *SubscriptionRepository) ListSubscription(ctx context.Context, offset, limit int) ([]*domain.Subscription, error) {
 	var subscriptions []*domain.Subscription
-	err := r.db.WithContext(ctx).Model(&domain.Subscription{}).Scan(&subscriptions).Error
+	err := r.db.WithContext(ctx).Offset(offset).Limit(limit).Model(&domain.Subscription{}).Scan(&subscriptions).Error
 	return subscriptions, err
 }
 
@@ -79,4 +79,10 @@ func (r *SubscriptionRepository) TotalCost(ctx context.Context, userID *uuid.UUI
 	}
 
 	return total, nil
+}
+
+func (r *SubscriptionRepository) Count(ctx context.Context) (int64, error) {
+	var count int64
+	result := r.db.Model(&domain.Subscription{}).Count(&count)
+	return count, result.Error
 }

@@ -105,6 +105,17 @@ paths:
       summary: Получить подписку
   /all:
     get:
+      parameters:
+      - default: 1
+        description: Номер страницы
+        in: query
+        name: page
+        type: integer
+      - default: 10
+        description: Лимит на страницу
+        in: query
+        name: limit
+        type: integer
       responses:
         "200":
           description: OK

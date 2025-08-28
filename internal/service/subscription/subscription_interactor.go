@@ -100,19 +100,25 @@ func (si *SubscriptionInteractor) UpdateSubscription(ctx context.Context, subscr
 	return nil
 }
 
-func (si *SubscriptionInteractor) ListSubscription(ctx context.Context) ([]*domain.Subscription, error) {
+func (si *SubscriptionInteractor) ListSubscription(ctx context.Context, offset, limit int) ([]*domain.Subscription, int64, error) {
 	const op = "service.subscription.list"
 	log := si.log.With(
 		slog.String("op", op),
 	)
 	log.Info("getting list of subscriptions")
-	list, err := si.subsRepo.ListSubscription(ctx)
+	list, err := si.subsRepo.ListSubscription(ctx, offset, limit)
 	if err != nil {
 		log.Error("failed to get list of subscription")
-		return nil, fmt.Errorf("%s: %w", op, err)
+		return nil, 0, fmt.Errorf("%s: %w", op, err)
 	}
+	total, err := si.subsRepo.Count(ctx)
+	if err != nil {
+		log.Error("failed to count of subscription")
+		return list, 0, err
+	}
+
 	log.Info("list provided")
-	return list, nil
+	return list, total, nil
 }
 
 func (si *SubscriptionInteractor) TotalCost(ctx context.Context, userID *uuid.UUID, serviceName *string, startDate, endDate domain.MonthYear) (int, error) {
