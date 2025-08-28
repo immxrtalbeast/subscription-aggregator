@@ -8,8 +8,9 @@ import (
 )
 
 type Config struct {
-	Env string   `yaml:"env" env-default:"local"`
-	DB  DBConfig `yaml:"db"`
+	Env  string   `yaml:"env" env-default:"local"`
+	Port string   `yaml:"port" env-default: "8080"`
+	DB   DBConfig `yaml:"db"`
 }
 
 type DBConfig struct {

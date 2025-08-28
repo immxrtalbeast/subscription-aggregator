@@ -1,10 +1,15 @@
 package main
 
 import (
+	"context"
 	"fmt"
 	"log/slog"
+	"net/http"
 	"net/url"
 	"os"
+	"os/signal"
+	"syscall"
+	"time"
 
 	"github.com/gin-gonic/gin"
 	"github.com/golang-migrate/migrate/v4"
@@ -66,7 +71,40 @@ func main() {
 		api.DELETE("/:id", subscriptionController.DeleteSubscription)
 		api.GET("/total", subscriptionController.TotalCost)
 	}
-	router.Run(":8080")
+	addr := ":" + cfg.Port
+	srv := &http.Server{
+		Addr:         addr,
+		Handler:      router,
+		ReadTimeout:  15 * time.Second,
+		WriteTimeout: 15 * time.Second,
+		IdleTimeout:  60 * time.Second,
+	}
+	go func() {
+		log.Info("starting server", "port", srv.Addr)
+		if err := srv.ListenAndServe(); err != nil && err != http.ErrServerClosed {
+			log.Error("server failed to start", sl.Err(err))
+			panic("fatal")
+		}
+	}()
+	stop := make(chan os.Signal, 1)
+	signal.Notify(stop, syscall.SIGTERM, syscall.SIGINT)
+	<-stop
+	log.Info("shutting down server...")
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel()
+
+	if err := srv.Shutdown(ctx); err != nil {
+		log.Error("server forced to shutdown:", sl.Err(err))
+		panic("fatal")
+	}
+	sqlDB, _ := db.DB()
+	if err := sqlDB.Close(); err != nil {
+		log.Error("failed to close db: ", sl.Err(err))
+		panic("fatal")
+	}
+
+	log.Info("server exiting")
+
 }
 
 func runMigrations(cfg *config.Config) error {

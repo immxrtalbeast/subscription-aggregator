@@ -1,4 +1,5 @@
 env: dev
+port: "8080"
 db:
   host: postgres
   port: 5432

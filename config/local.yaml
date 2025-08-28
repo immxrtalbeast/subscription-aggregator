@@ -1,4 +1,5 @@
 env: local
+port: "8080"
 db:
   host: localhost
   port: 5432
