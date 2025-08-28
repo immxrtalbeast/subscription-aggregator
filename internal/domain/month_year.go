@@ -54,6 +54,31 @@ func ParseMonthYear(s string) (MonthYear, error) {
 	return NewMonthYear(year, month)
 }
 
+func MaxMonthYear(a, b MonthYear) MonthYear {
+	if CompareMonthYears(a, b) > 0 {
+		return a
+	}
+	return b
+}
+
+func MinMonthYear(a, b MonthYear) MonthYear {
+	if CompareMonthYears(a, b) < 0 {
+		return a
+	}
+	return b
+}
+
+func MonthDifference(start, end MonthYear) int {
+	return (end.Year-start.Year)*12 + (end.Month - start.Month)
+}
+
+func CompareMonthYears(a, b MonthYear) int {
+	if a.Year != b.Year {
+		return a.Year - b.Year
+	}
+	return a.Month - b.Month
+}
+
 ///GORM
 
 func (my MonthYear) Value() (driver.Value, error) {

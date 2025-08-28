@@ -30,7 +30,7 @@ type SubscriptionRepository interface {
 	DeleteSubscription(ctx context.Context, subscriptionID uuid.UUID) error
 	UpdateSubscription(ctx context.Context, subscription *Subscription) error
 	ListSubscription(ctx context.Context, offset, limit int) ([]*Subscription, error)
-	TotalCost(ctx context.Context, userID *uuid.UUID, serviceName *string, startDate, endDate MonthYear) (int, error)
+	TotalCost(ctx context.Context, userID *uuid.UUID, serviceName *string, startDate, endDate MonthYear) ([]Subscription, error)
 	Count(ctx context.Context) (int64, error)
 }
 

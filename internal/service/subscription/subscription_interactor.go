@@ -133,5 +133,32 @@ func (si *SubscriptionInteractor) TotalCost(ctx context.Context, userID *uuid.UU
 		return 0, errors.New("start date cannot be after end date")
 	}
 
-	return si.subsRepo.TotalCost(ctx, userID, serviceName, startDate, endDate)
+	subscriptions, err := si.subsRepo.TotalCost(ctx, userID, serviceName, startDate, endDate)
+	if err != nil {
+		log.Error("failed to get suscriptions", sl.Err(err))
+		return 0, err
+	}
+	total := 0
+	for _, sub := range subscriptions {
+		months := si.calculateActiveMonths(sub.StartDate, sub.EndDate, startDate, endDate)
+		total += sub.Price * months
+	}
+	return total, nil
+}
+
+func (si *SubscriptionInteractor) calculateActiveMonths(subStart domain.MonthYear, subEnd *domain.MonthYear, periodStart, periodEnd domain.MonthYear) int {
+	startMonth := domain.MaxMonthYear(subStart, periodStart)
+
+	var endMonth domain.MonthYear
+	if subEnd == nil {
+		endMonth = periodEnd
+	} else {
+		endMonth = domain.MinMonthYear(*subEnd, periodEnd)
+	}
+
+	if domain.CompareMonthYears(startMonth, endMonth) > 0 {
+		return 0
+	}
+
+	return domain.MonthDifference(startMonth, endMonth) + 1
 }

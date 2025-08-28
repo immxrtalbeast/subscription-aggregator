@@ -59,12 +59,10 @@ func (r *SubscriptionRepository) ListSubscription(ctx context.Context, offset, l
 	return subscriptions, err
 }
 
-func (r *SubscriptionRepository) TotalCost(ctx context.Context, userID *uuid.UUID, serviceName *string, startDate, endDate domain.MonthYear) (int, error) {
-	var total int
-	months := int(endDate.ToTime().Sub(startDate.ToTime()).Hours() / 24 / 30)
+func (r *SubscriptionRepository) TotalCost(ctx context.Context, userID *uuid.UUID, serviceName *string, startDate, endDate domain.MonthYear) ([]domain.Subscription, error) {
+	var subscriptions []domain.Subscription
 
 	query := r.db.WithContext(ctx).Model(&domain.Subscription{}).
-		Select("COALESCE(SUM(price * ?), 0)", months).
 		Where("start_date <= ?", endDate).
 		Where("(end_date IS NULL OR end_date >= ?)", startDate)
 
@@ -74,12 +72,12 @@ func (r *SubscriptionRepository) TotalCost(ctx context.Context, userID *uuid.UUI
 	if serviceName != nil {
 		query = query.Where("service_name = ?", serviceName)
 	}
-	err := query.Row().Scan(&total)
+	err := query.Scan(&subscriptions).Error
 	if err != nil {
-		return 0, fmt.Errorf("failed to calculate total cost: %w", err)
+		return nil, fmt.Errorf("failed to calculate total cost: %w", err)
 	}
 
-	return total, nil
+	return subscriptions, nil
 }
 
 func (r *SubscriptionRepository) Count(ctx context.Context) (int64, error) {
