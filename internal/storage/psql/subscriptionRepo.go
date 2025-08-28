@@ -61,9 +61,10 @@ func (r *SubscriptionRepository) ListSubscription(ctx context.Context, offset, l
 
 func (r *SubscriptionRepository) TotalCost(ctx context.Context, userID *uuid.UUID, serviceName *string, startDate, endDate domain.MonthYear) (int, error) {
 	var total int
+	months := int(endDate.ToTime().Sub(startDate.ToTime()).Hours() / 24 / 30)
 
 	query := r.db.WithContext(ctx).Model(&domain.Subscription{}).
-		Select("COALESCE(SUM(price), 0)").
+		Select("COALESCE(SUM(price * ?), 0)", months).
 		Where("start_date <= ?", endDate).
 		Where("(end_date IS NULL OR end_date >= ?)", startDate)
 

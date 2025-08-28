@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"strconv"
 	"strings"
+	"time"
 )
 
 type MonthYear struct {
@@ -105,4 +106,14 @@ func (my *MonthYear) UnmarshalJSON(data []byte) error {
 	my.Year = parsed.Year
 	my.Month = parsed.Month
 	return nil
+}
+func (my MonthYear) ToTime() time.Time {
+	return time.Date(my.Year, time.Month(my.Month), 1, 0, 0, 0, 0, time.UTC)
+}
+
+func FromTime(t time.Time) MonthYear {
+	return MonthYear{
+		Year:  t.Year(),
+		Month: int(t.Month()),
+	}
 }
